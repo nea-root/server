@@ -1,92 +1,42 @@
 #!/usr/bin/env node
-
-/**
- * Module dependencies.
- */
-
-import app from '../app.js'// ES6 import for app
-import debugLib from 'debug'; // ES6 import for debug
-import http from 'http'; // ES6 import for http
+import 'dotenv/config';
+import { httpServer, app } from '../app.js';
+import debugLib from 'debug';
 
 const debug = debugLib('server:server');
-
-/**
- * Get port from environment and store in Express.
- */
 
 const port = normalizePort(process.env.PORT || '9000');
 app.set('port', port);
 
-/**
- * Create HTTP server.
- */
-
-const server = http.createServer(app);
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
-
-/**
- * Normalize a port into a number, string, or false.
- */
+httpServer.listen(port);
+httpServer.on('error', onError);
+httpServer.on('listening', onListening);
 
 function normalizePort(val) {
-  const port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
-
-  if (port >= 0) {
-    // port number
-    return port;
-  }
-
+  const p = parseInt(val, 10);
+  if (isNaN(p)) return val;
+  if (p >= 0) return p;
   return false;
 }
 
-/**
- * Event listener for HTTP server "error" event.
- */
-
 function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
-
-  const bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
-
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
+  if (error.syscall !== 'listen') throw error;
+  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
+  if (error.code === 'EACCES') { console.error(`${bind} requires elevated privileges`); process.exit(1); }
+  if (error.code === 'EADDRINUSE') { console.error(`${bind} is already in use`); process.exit(1); }
+  throw error;
 }
-
-/**
- * Event listener for HTTP server "listening" event.
- */
 
 function onListening() {
-  const addr = server.address();
-  const bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+  const addr = httpServer.address();
+  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
+  debug(`Listening on ${bind}`);
+  console.log(`\nNevereveralone API running on http://localhost:${addr.port}`);
+  console.log(`GraphQL playground: http://localhost:${addr.port}/graphql`);
+  console.log(`Health check:       http://localhost:${addr.port}/health\n`);
 }
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection:', err);
+  httpServer.close(() => process.exit(1));
+});

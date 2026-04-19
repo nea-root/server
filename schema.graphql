@@ -1,3 +1,465 @@
+scalar Date
+
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+type AuthPayload {
+  accessToken: String!
+  refreshToken: String!
+  user: User!
+}
+
+type TokenPayload {
+  accessToken: String!
+  refreshToken: String!
+}
+
+type MessagePayload {
+  success: Boolean!
+  message: String!
+}
+
+type RegisterPayload {
+  userId: ID!
+  message: String!
+}
+
+type ResetTokenPayload {
+  resetToken: String!
+}
+
+# ─── User ─────────────────────────────────────────────────────────────────────
+
+type User {
+  id: ID!
+  email: String!
+  role: UserRole!
+  firstName: String
+  lastName: String
+  phone: String
+  isAnonymous: Boolean!
+  anonymousAlias: String
+  isEmailVerified: Boolean!
+  isDocumentVerified: Boolean!
+  isProfileComplete: Boolean!
+  isActive: Boolean!
+  country: String
+  region: String
+  lastLoginAt: Date
+  createdAt: Date!
+  updatedAt: Date!
+  profile: Profile
+}
+
+enum UserRole {
+  victim
+  volunteer
+  lawyer
+  therapist
+  admin
+}
+
+# ─── Profile ──────────────────────────────────────────────────────────────────
+
+type Profile {
+  id: ID!
+  user: User!
+  bio: String
+  avatar: String
+  dateOfBirth: Date
+  gender: String
+  languages: [String!]
+  professionalTitle: String
+  specializations: [String!]
+  yearsOfExperience: Int
+  licenseNumber: String
+  barRegistrationNumber: String
+  qualifications: [String!]
+  hourlyRate: Float
+  currency: String
+  areasServed: [String!]
+  volunteerMotivation: String
+  volunteerAvailability: String
+  averageRating: Float!
+  totalReviews: Int!
+  updatedAt: Date!
+}
+
+input UpdateProfileInput {
+  bio: String
+  dateOfBirth: Date
+  gender: String
+  languages: [String!]
+  professionalTitle: String
+  specializations: [String!]
+  yearsOfExperience: Int
+  licenseNumber: String
+  barRegistrationNumber: String
+  qualifications: [String!]
+  hourlyRate: Float
+  currency: String
+  areasServed: [String!]
+  volunteerMotivation: String
+  volunteerAvailability: String
+}
+
+# ─── Document ─────────────────────────────────────────────────────────────────
+
+type Document {
+  id: ID!
+  owner: User!
+  type: String!
+  title: String!
+  description: String
+  fileUrl: String!
+  fileName: String!
+  fileSize: Int
+  mimeType: String
+  verificationStatus: DocumentStatus!
+  verifiedAt: Date
+  rejectionReason: String
+  notes: [DocumentNote!]!
+  isSharedWithProfessional: Boolean!
+  sharedWith: [User!]!
+  createdAt: Date!
+  updatedAt: Date!
+}
+
+type DocumentNote {
+  id: ID!
+  content: String!
+  addedBy: User
+  isStarred: Boolean!
+  createdAt: Date!
+}
+
+enum DocumentStatus {
+  pending
+  under_review
+  verified
+  rejected
+}
+
+# ─── Availability ─────────────────────────────────────────────────────────────
+
+type WeeklyInterval {
+  dayOfWeek: Int!
+  startTime: String!
+  endTime: String!
+}
+
+type Absence {
+  startDate: Date!
+  endDate: Date!
+  reason: String
+}
+
+type Availability {
+  id: ID!
+  professional: User!
+  timezone: String!
+  weeklyIntervals: [WeeklyInterval!]!
+  absences: [Absence!]!
+  sessionDurationMinutes: Int!
+  isAcceptingClients: Boolean!
+}
+
+type TimeSlot {
+  startTime: Date!
+  endTime: Date!
+}
+
+input WeeklyIntervalInput {
+  dayOfWeek: Int!
+  startTime: String!
+  endTime: String!
+}
+
+# ─── Appointment ──────────────────────────────────────────────────────────────
+
+type Appointment {
+  id: ID!
+  client: User!
+  professional: User!
+  professionalType: String!
+  startTime: Date!
+  endTime: Date!
+  durationMinutes: Int!
+  status: AppointmentStatus!
+  meetingRoomId: String
+  notes: String
+  cancellationReason: String
+  cancelledBy: User
+  rescheduleHistory: [RescheduleRecord!]!
+  amountCharged: Float
+  currency: String
+  createdAt: Date!
+}
+
+type RescheduleRecord {
+  previousStartTime: Date!
+  previousEndTime: Date!
+  rescheduledBy: User!
+  rescheduledAt: Date!
+  reason: String
+}
+
+enum AppointmentStatus {
+  pending
+  confirmed
+  in_progress
+  completed
+  cancelled
+  no_show
+}
+
+# ─── Chat & Messaging ─────────────────────────────────────────────────────────
+
+type Chat {
+  id: ID!
+  participants: [User!]!
+  type: String!
+  appointment: Appointment
+  lastMessage: ChatMessage
+  lastMessageAt: Date
+  unreadCount: Int!
+  createdAt: Date!
+}
+
+type ChatMessage {
+  id: ID!
+  chat: Chat!
+  sender: User!
+  content: String
+  type: String!
+  attachments: [Attachment!]!
+  isRead: Boolean!
+  readAt: Date
+  isDeleted: Boolean!
+  senderAlias: String
+  createdAt: Date!
+}
+
+type Attachment {
+  url: String!
+  fileName: String!
+  mimeType: String!
+  size: Int
+}
+
+# ─── Payment ──────────────────────────────────────────────────────────────────
+
+type Payment {
+  id: ID!
+  payer: User!
+  type: String!
+  amount: Float!
+  currency: String!
+  status: PaymentStatus!
+  paymentMethod: String
+  receiptUrl: String
+  createdAt: Date!
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+  cancelled
+}
+
+type PaymentIntentPayload {
+  clientSecret: String!
+  paymentId: ID!
+}
+
+type SubscriptionType {
+  id: ID!
+  user: User!
+  plan: String!
+  status: String!
+  currentPeriodStart: Date
+  currentPeriodEnd: Date
+  cancelAtPeriodEnd: Boolean!
+  currency: String!
+  amount: Float
+  interval: String
+}
+
+type SubscriptionPayload {
+  subscription: SubscriptionType!
+  clientSecret: String
+}
+
+# ─── Notification ─────────────────────────────────────────────────────────────
+
+type Notification {
+  id: ID!
+  type: String!
+  title: String!
+  body: String!
+  isRead: Boolean!
+  readAt: Date
+  createdAt: Date!
+}
+
+type NotificationsPayload {
+  notifications: [Notification!]!
+  unreadCount: Int!
+}
+
+# ─── SOS ──────────────────────────────────────────────────────────────────────
+
+type SosEvent {
+  id: ID!
+  triggeredBy: User!
+  emergencyNumber: String
+  status: String!
+  resolvedAt: Date
+  notes: String
+  createdAt: Date!
+}
+
+type SosPayload {
+  sosEventId: ID!
+  emergencyNumber: String!
+  message: String!
+}
+
+# ─── Review ───────────────────────────────────────────────────────────────────
+
+type Review {
+  id: ID!
+  reviewer: User
+  professional: User!
+  rating: Int!
+  comment: String
+  isAnonymous: Boolean!
+  createdAt: Date!
+}
+
+# ─── Awareness ────────────────────────────────────────────────────────────────
+
+type AwarenessArticle {
+  id: ID!
+  title: String!
+  slug: String!
+  excerpt: String
+  content: String!
+  coverImage: String
+  category: String
+  tags: [String!]!
+  author: User
+  isPublished: Boolean!
+  publishedAt: Date
+  viewCount: Int!
+  createdAt: Date!
+}
+
+# ─── Queries ──────────────────────────────────────────────────────────────────
+
 type Query {
-  hello: String
+  # Auth
+  me: User!
+
+  # Profiles
+  myProfile: Profile!
+  profile(userId: ID!): Profile!
+  professionals(role: UserRole, specialization: String, country: String, minRating: Float, page: Int, limit: Int): [Profile!]!
+
+  # Documents
+  myDocuments(type: String): [Document!]!
+  document(id: ID!): Document!
+
+  # Availability
+  availability(professionalId: ID!): Availability
+  availableSlots(professionalId: ID!, date: String!): [TimeSlot!]!
+
+  # Appointments
+  appointments(status: AppointmentStatus, view: String, page: Int, limit: Int): [Appointment!]!
+  appointment(id: ID!): Appointment!
+
+  # Chat
+  chats: [Chat!]!
+  chatMessages(chatId: ID!, page: Int, limit: Int): [ChatMessage!]!
+
+  # Payments
+  paymentHistory(page: Int, limit: Int): [Payment!]!
+  mySubscription: SubscriptionType
+
+  # Notifications
+  notifications(unreadOnly: Boolean, page: Int, limit: Int): NotificationsPayload!
+
+  # SOS
+  sosHistory: [SosEvent!]!
+
+  # Reviews
+  reviews(professionalId: ID!, page: Int, limit: Int): [Review!]!
+
+  # Awareness
+  articles(category: String, tag: String, page: Int, limit: Int): [AwarenessArticle!]!
+  article(slug: String!): AwarenessArticle!
+}
+
+# ─── Mutations ────────────────────────────────────────────────────────────────
+
+type Mutation {
+  # Auth
+  register(email: String!, password: String!, role: UserRole!, firstName: String, lastName: String, phone: String, isAnonymous: Boolean, country: String, region: String): RegisterPayload!
+  verifyEmail(userId: ID!, code: String!): MessagePayload!
+  resendVerification(email: String!): MessagePayload!
+  login(email: String!, password: String!): AuthPayload!
+  refreshToken(refreshToken: String!): TokenPayload!
+  logout(refreshToken: String): MessagePayload!
+  forgotPassword(email: String!): MessagePayload!
+  verifyResetCode(email: String!, code: String!): ResetTokenPayload!
+  resetPassword(email: String!, resetToken: String!, newPassword: String!): MessagePayload!
+  changePassword(currentPassword: String!, newPassword: String!): MessagePayload!
+
+  # Profile
+  updateProfile(input: UpdateProfileInput!): Profile!
+
+  # Documents
+  addDocumentNote(documentId: ID!, content: String!): Document!
+  toggleNoteStarred(documentId: ID!, noteId: ID!): Document!
+  shareDocument(documentId: ID!, professionalId: ID!): MessagePayload!
+  verifyDocument(documentId: ID!, status: DocumentStatus!, rejectionReason: String): Document!
+  deleteDocument(id: ID!): MessagePayload!
+
+  # Availability
+  upsertAvailability(weeklyIntervals: [WeeklyIntervalInput!]!, timezone: String, sessionDurationMinutes: Int, isAcceptingClients: Boolean): Availability!
+  scheduleAbsence(startDate: Date!, endDate: Date!, reason: String): Availability!
+
+  # Appointments
+  bookAppointment(professionalId: ID!, professionalType: String!, startTime: Date!, notes: String): Appointment!
+  confirmAppointment(id: ID!): Appointment!
+  cancelAppointment(id: ID!, reason: String): Appointment!
+  rescheduleAppointment(id: ID!, newStartTime: Date!, reason: String): Appointment!
+
+  # Chat
+  getOrCreateChat(participantId: ID!, type: String): Chat!
+  sendMessage(chatId: ID!, content: String, type: String): ChatMessage!
+  deleteMessage(chatId: ID!, messageId: ID!): MessagePayload!
+  markMessagesRead(chatId: ID!): MessagePayload!
+
+  # Payments
+  createAppointmentPaymentIntent(appointmentId: ID!): PaymentIntentPayload!
+  createSubscription(plan: String!, currency: String!, paymentMethodId: String!): SubscriptionPayload!
+  cancelSubscription: MessagePayload!
+
+  # Notifications
+  markNotificationsRead(ids: [ID!]): MessagePayload!
+  deleteNotification(id: ID!): MessagePayload!
+
+  # SOS
+  triggerSOS(latitude: Float, longitude: Float): SosPayload!
+  resolveSOS(id: ID!, notes: String): SosEvent!
+
+  # Reviews
+  createReview(professionalId: ID!, appointmentId: ID!, rating: Int!, comment: String, isAnonymous: Boolean): Review!
+
+  # Awareness (admin)
+  createArticle(title: String!, slug: String!, content: String!, excerpt: String, category: String, tags: [String!], coverImage: String): AwarenessArticle!
+  publishArticle(id: ID!): AwarenessArticle!
+  deleteArticle(id: ID!): MessagePayload!
 }
