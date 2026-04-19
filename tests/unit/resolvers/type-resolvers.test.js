@@ -7,10 +7,21 @@ vi.mock('../../../src/models/Profile.js', () => ({
   default: { findOne: vi.fn().mockResolvedValue({ _id: 'p1', bio: 'Hi' }) },
 }));
 vi.mock('../../../src/models/Chat.js', () => ({
-  default: { findById: vi.fn().mockResolvedValue({ _id: 'c1' }), find: vi.fn(), findOne: vi.fn(), findByIdAndUpdate: vi.fn(), create: vi.fn() },
+  default: {
+    findById: vi.fn().mockResolvedValue({ _id: 'c1' }),
+    find: vi.fn(),
+    findOne: vi.fn(),
+    findByIdAndUpdate: vi.fn(),
+    create: vi.fn(),
+  },
 }));
 vi.mock('../../../src/models/Message.js', () => ({
-  default: { findById: vi.fn().mockResolvedValue({ _id: 'm1' }), find: vi.fn(), create: vi.fn(), updateMany: vi.fn() },
+  default: {
+    findById: vi.fn().mockResolvedValue({ _id: 'm1' }),
+    find: vi.fn(),
+    create: vi.fn(),
+    updateMany: vi.fn(),
+  },
 }));
 vi.mock('../../../src/models/Document.js', () => ({
   default: { findById: vi.fn(), find: vi.fn(), countDocuments: vi.fn() },
@@ -28,7 +39,12 @@ vi.mock('../../../src/models/Subscription.js', () => ({
   default: { findOne: vi.fn(), create: vi.fn() },
 }));
 vi.mock('../../../src/models/Notification.js', () => ({
-  default: { find: vi.fn(), updateMany: vi.fn(), findOneAndDelete: vi.fn(), countDocuments: vi.fn() },
+  default: {
+    find: vi.fn(),
+    updateMany: vi.fn(),
+    findOneAndDelete: vi.fn(),
+    countDocuments: vi.fn(),
+  },
 }));
 vi.mock('../../../src/models/SosEvent.js', () => ({
   default: { create: vi.fn(), find: vi.fn(), findByIdAndUpdate: vi.fn() },
@@ -37,14 +53,24 @@ vi.mock('../../../src/models/Review.js', () => ({
   default: { find: vi.fn(), findOne: vi.fn(), create: vi.fn() },
 }));
 vi.mock('../../../src/models/AwarenessArticle.js', () => ({
-  default: { find: vi.fn(), findOne: vi.fn(), findByIdAndUpdate: vi.fn(), findByIdAndDelete: vi.fn(), create: vi.fn() },
+  default: {
+    find: vi.fn(),
+    findOne: vi.fn(),
+    findByIdAndUpdate: vi.fn(),
+    findByIdAndDelete: vi.fn(),
+    create: vi.fn(),
+  },
 }));
 vi.mock('../../../src/utils/email.js', () => ({
-  sendVerificationEmail: vi.fn(), sendPasswordResetEmail: vi.fn(), sendAppointmentEmail: vi.fn(),
+  sendVerificationEmail: vi.fn(),
+  sendPasswordResetEmail: vi.fn(),
+  sendAppointmentEmail: vi.fn(),
 }));
 vi.mock('../../../src/utils/jwt.js', () => ({
-  generateAccessToken: vi.fn(), generateRefreshToken: vi.fn(),
-  verifyRefreshToken: vi.fn(), verifyAccessToken: vi.fn(),
+  generateAccessToken: vi.fn(),
+  generateRefreshToken: vi.fn(),
+  verifyRefreshToken: vi.fn(),
+  verifyAccessToken: vi.fn(),
 }));
 
 import { authResolvers } from '../../../src/resolvers/auth.resolver.js';
@@ -69,7 +95,7 @@ describe('User type resolvers', () => {
 
   it('User.profile calls Profile.findOne', async () => {
     Profile.findOne.mockResolvedValue({ _id: 'p1' });
-    const result = await authResolvers.User.profile({ _id: 'u1' });
+    await authResolvers.User.profile({ _id: 'u1' });
     expect(Profile.findOne).toHaveBeenCalledWith({ user: 'u1' });
   });
 });
@@ -186,7 +212,9 @@ describe('Appointment type resolvers', () => {
   });
 
   it('Appointment.rescheduleHistory returns empty array as default', () => {
-    expect(appointmentResolvers.Appointment.rescheduleHistory({ rescheduleHistory: undefined })).toEqual([]);
+    expect(
+      appointmentResolvers.Appointment.rescheduleHistory({ rescheduleHistory: undefined }),
+    ).toEqual([]);
   });
 
   it('RescheduleRecord.rescheduledBy fetches user', async () => {
@@ -209,12 +237,16 @@ describe('Chat type resolvers', () => {
     const chat = {
       unreadCounts: [{ user: { toString: () => 'u1' }, count: 5 }],
     };
-    const count = chatResolvers.Chat.unreadCount(chat, null, { user: { _id: { toString: () => 'u1' } } });
+    const count = chatResolvers.Chat.unreadCount(chat, null, {
+      user: { _id: { toString: () => 'u1' } },
+    });
     expect(count).toBe(5);
   });
 
   it('Chat.unreadCount returns 0 when user not in list', () => {
-    const count = chatResolvers.Chat.unreadCount({ unreadCounts: [] }, null, { user: { _id: { toString: () => 'u1' } } });
+    const count = chatResolvers.Chat.unreadCount({ unreadCounts: [] }, null, {
+      user: { _id: { toString: () => 'u1' } },
+    });
     expect(count).toBe(0);
   });
 
@@ -271,7 +303,9 @@ describe('Payment type resolvers', () => {
   });
 
   it('SubscriptionType.cancelAtPeriodEnd defaults to false', () => {
-    expect(paymentResolvers.SubscriptionType.cancelAtPeriodEnd({ cancelAtPeriodEnd: undefined })).toBe(false);
+    expect(
+      paymentResolvers.SubscriptionType.cancelAtPeriodEnd({ cancelAtPeriodEnd: undefined }),
+    ).toBe(false);
   });
 
   it('SubscriptionType.currency defaults to USD', () => {

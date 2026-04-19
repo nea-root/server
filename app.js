@@ -43,7 +43,9 @@ app.post('/stripe/webhook', express.raw({ type: 'application/json' }), async (re
     const { default: Stripe } = await import('stripe');
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const event = stripe.webhooks.constructEvent(
-      req.body, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET
+      req.body,
+      req.headers['stripe-signature'],
+      process.env.STRIPE_WEBHOOK_SECRET,
     );
 
     const { default: Payment } = await import('./src/models/Payment.js');
@@ -55,7 +57,9 @@ app.post('/stripe/webhook', express.raw({ type: 'application/json' }), async (re
       const intent = event.data.object;
       await Payment.findOneAndUpdate({ stripePaymentIntentId: intent.id }, { status: 'succeeded' });
       if (intent.metadata?.appointmentId) {
-        const appt = await Appointment.findByIdAndUpdate(intent.metadata.appointmentId, { status: 'confirmed' });
+        const appt = await Appointment.findByIdAndUpdate(intent.metadata.appointmentId, {
+          status: 'confirmed',
+        });
         if (appt) {
           await Notification.create({
             recipient: appt.client,
@@ -67,9 +71,15 @@ app.post('/stripe/webhook', express.raw({ type: 'application/json' }), async (re
         }
       }
     } else if (event.type === 'payment_intent.payment_failed') {
-      await Payment.findOneAndUpdate({ stripePaymentIntentId: event.data.object.id }, { status: 'failed' });
+      await Payment.findOneAndUpdate(
+        { stripePaymentIntentId: event.data.object.id },
+        { status: 'failed' },
+      );
     } else if (event.type === 'customer.subscription.deleted') {
-      await Subscription.findOneAndUpdate({ stripeSubscriptionId: event.data.object.id }, { status: 'cancelled' });
+      await Subscription.findOneAndUpdate(
+        { stripeSubscriptionId: event.data.object.id },
+        { status: 'cancelled' },
+      );
     }
     res.json({ received: true });
   } catch (err) {
@@ -100,7 +110,11 @@ const upload = multer({
 
 app.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, message: 'No file' });
-  res.json({ success: true, url: `/uploads/${req.file.filename}`, fileName: req.file.originalname });
+  res.json({
+    success: true,
+    url: `/uploads/${req.file.filename}`,
+    fileName: req.file.originalname,
+  });
 });
 
 app.use('/uploads', express.static(path.join(__dirname, uploadDir)));
@@ -126,7 +140,7 @@ app.use('/users', usersRouter);
 
 // ─── 404 & error handler ─────────────────────────────────────────────────────
 app.use((req, res, next) => next(createError(404)));
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
   res.status(err.status || 500);

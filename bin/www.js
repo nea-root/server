@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+/* eslint-disable n/no-process-exit */
 import 'dotenv/config';
 import { httpServer, app } from '../app.js';
 import debugLib from 'debug';
@@ -22,8 +22,14 @@ function normalizePort(val) {
 function onError(error) {
   if (error.syscall !== 'listen') throw error;
   const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
-  if (error.code === 'EACCES') { console.error(`${bind} requires elevated privileges`); process.exit(1); }
-  if (error.code === 'EADDRINUSE') { console.error(`${bind} is already in use`); process.exit(1); }
+  if (error.code === 'EACCES') {
+    console.error(`${bind} requires elevated privileges`);
+    process.exit(1);
+  }
+  if (error.code === 'EADDRINUSE') {
+    console.error(`${bind} is already in use`);
+    process.exit(1);
+  }
   throw error;
 }
 
@@ -31,9 +37,9 @@ function onListening() {
   const addr = httpServer.address();
   const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
   debug(`Listening on ${bind}`);
-  console.log(`\nNevereveralone API running on http://localhost:${addr.port}`);
-  console.log(`GraphQL playground: http://localhost:${addr.port}/graphql`);
-  console.log(`Health check:       http://localhost:${addr.port}/health\n`);
+  console.info(`\nNevereveralone API running on http://localhost:${addr.port}`);
+  console.info(`GraphQL playground: http://localhost:${addr.port}/graphql`);
+  console.info(`Health check:       http://localhost:${addr.port}/health\n`);
 }
 
 process.on('unhandledRejection', (err) => {

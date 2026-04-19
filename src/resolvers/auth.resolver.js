@@ -8,7 +8,9 @@ import { requireAuth } from '../middleware/context.js';
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-const err = (msg, code = 'BAD_USER_INPUT') => { throw new GraphQLError(msg, { extensions: { code } }); };
+const err = (msg, code = 'BAD_USER_INPUT') => {
+  throw new GraphQLError(msg, { extensions: { code } });
+};
 
 export const authResolvers = {
   Query: {
@@ -20,7 +22,7 @@ export const authResolvers = {
 
   Mutation: {
     register: async (_, args) => {
-      const { email, password, role, isAnonymous } = args;
+      const { email, isAnonymous } = args;
       if (await User.findOne({ email })) err('Email already registered');
 
       const newUser = await User.create({
@@ -35,11 +37,16 @@ export const authResolvers = {
       await newUser.save({ validateBeforeSave: false });
       await sendVerificationEmail(email, code).catch(() => {});
 
-      return { userId: newUser._id, message: 'Registration successful. Check your email for the verification code.' };
+      return {
+        userId: newUser._id,
+        message: 'Registration successful. Check your email for the verification code.',
+      };
     },
 
     verifyEmail: async (_, { userId, code }) => {
-      const user = await User.findById(userId).select('+emailVerificationCode +emailVerificationExpires');
+      const user = await User.findById(userId).select(
+        '+emailVerificationCode +emailVerificationExpires',
+      );
       if (!user) err('User not found', 'NOT_FOUND');
       if (user.isEmailVerified) err('Already verified');
       if (user.emailVerificationCode !== code || user.emailVerificationExpires < new Date()) {
@@ -66,7 +73,8 @@ export const authResolvers = {
 
     login: async (_, { email, password }) => {
       const user = await User.findOne({ email }).select('+password +refreshTokens');
-      if (!user || !(await user.comparePassword(password))) err('Invalid email or password', 'UNAUTHENTICATED');
+      if (!user || !(await user.comparePassword(password)))
+        err('Invalid email or password', 'UNAUTHENTICATED');
       if (!user.isEmailVerified) err('Please verify your email first', 'FORBIDDEN');
       if (user.isBanned) err('Account suspended. Contact support.', 'FORBIDDEN');
 
@@ -85,13 +93,16 @@ export const authResolvers = {
       try {
         const decoded = verifyRefreshToken(refreshToken);
         const user = await User.findById(decoded.userId).select('+refreshTokens');
-        if (!user || !user.refreshTokens.includes(refreshToken)) err('Invalid refresh token', 'UNAUTHENTICATED');
+        if (!user || !user.refreshTokens.includes(refreshToken))
+          err('Invalid refresh token', 'UNAUTHENTICATED');
 
         const payload = { userId: user._id, role: user.role };
         const newAccess = generateAccessToken(payload);
         const newRefresh = generateRefreshToken(payload);
 
-        user.refreshTokens = user.refreshTokens.filter((t) => t !== refreshToken).concat(newRefresh);
+        user.refreshTokens = user.refreshTokens
+          .filter((t) => t !== refreshToken)
+          .concat(newRefresh);
         await user.save({ validateBeforeSave: false });
 
         return { accessToken: newAccess, refreshToken: newRefresh };
@@ -136,7 +147,11 @@ export const authResolvers = {
 
     resetPassword: async (_, { email, resetToken, newPassword }) => {
       const user = await User.findOne({ email }).select('+passwordResetCode +passwordResetExpires');
-      if (!user || user.passwordResetCode !== `verified:${resetToken}` || user.passwordResetExpires < new Date()) {
+      if (
+        !user ||
+        user.passwordResetCode !== `verified:${resetToken}` ||
+        user.passwordResetExpires < new Date()
+      ) {
         err('Invalid or expired reset token');
       }
       user.password = newPassword;

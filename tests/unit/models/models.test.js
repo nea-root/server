@@ -11,7 +11,7 @@ beforeAll(async () => {
 
 afterEach(async () => {
   const collections = mongoose.connection.collections;
-  for (const key in collections) await collections[key].deleteMany({});
+  for (const key in collections) await collections[key].deleteMany({}); // eslint-disable-line no-await-in-loop
 });
 
 afterAll(async () => {
@@ -71,23 +71,39 @@ describe('Document model', () => {
 
   it('rejects invalid document type', async () => {
     const user = await User.create({ email: 'doc2@t.com', password: 'pass1234', role: 'victim' });
-    await expect(Document.create({
-      owner: user._id, type: 'invalid_type', title: 'X', fileUrl: '/f', fileName: 'f',
-    })).rejects.toThrow();
+    await expect(
+      Document.create({
+        owner: user._id,
+        type: 'invalid_type',
+        title: 'X',
+        fileUrl: '/f',
+        fileName: 'f',
+      }),
+    ).rejects.toThrow();
   });
 
   it('rejects invalid verification status', async () => {
     const user = await User.create({ email: 'doc3@t.com', password: 'pass1234', role: 'victim' });
-    await expect(Document.create({
-      owner: user._id, type: 'evidence', title: 'X', fileUrl: '/f', fileName: 'f',
-      verificationStatus: 'approved',
-    })).rejects.toThrow();
+    await expect(
+      Document.create({
+        owner: user._id,
+        type: 'evidence',
+        title: 'X',
+        fileUrl: '/f',
+        fileName: 'f',
+        verificationStatus: 'approved',
+      }),
+    ).rejects.toThrow();
   });
 
   it('stores notes as subdocuments', async () => {
     const user = await User.create({ email: 'doc4@t.com', password: 'pass1234', role: 'victim' });
     const doc = await Document.create({
-      owner: user._id, type: 'evidence', title: 'X', fileUrl: '/f', fileName: 'f',
+      owner: user._id,
+      type: 'evidence',
+      title: 'X',
+      fileUrl: '/f',
+      fileName: 'f',
       notes: [{ content: 'Important note', addedBy: user._id }],
     });
     expect(doc.notes.length).toBe(1);
@@ -110,12 +126,18 @@ describe('Availability model', () => {
   it('enforces unique professional', async () => {
     const user = await User.create({ email: 'av2@t.com', password: 'pass1234', role: 'lawyer' });
     await Availability.create({ professional: user._id, weeklyIntervals: [] });
-    await expect(Availability.create({ professional: user._id, weeklyIntervals: [] })).rejects.toThrow();
+    await expect(
+      Availability.create({ professional: user._id, weeklyIntervals: [] }),
+    ).rejects.toThrow();
   });
 
   it('accepts valid session durations', async () => {
     const user = await User.create({ email: 'av3@t.com', password: 'pass1234', role: 'therapist' });
-    const av = await Availability.create({ professional: user._id, weeklyIntervals: [], sessionDurationMinutes: 30 });
+    const av = await Availability.create({
+      professional: user._id,
+      weeklyIntervals: [],
+      sessionDurationMinutes: 30,
+    });
     expect(av.sessionDurationMinutes).toBe(30);
   });
 });
@@ -130,8 +152,12 @@ describe('Appointment model', () => {
     const start = new Date('2027-01-01T10:00:00Z');
     const end = new Date('2027-01-01T11:00:00Z');
     const appt = await Appointment.create({
-      client: client._id, professional: prof._id, professionalType: 'lawyer',
-      startTime: start, endTime: end, durationMinutes: 60,
+      client: client._id,
+      professional: prof._id,
+      professionalType: 'lawyer',
+      startTime: start,
+      endTime: end,
+      durationMinutes: 60,
     });
     expect(appt.status).toBe('pending');
     expect(appt.meetingRoomId).toBeDefined();
@@ -139,17 +165,27 @@ describe('Appointment model', () => {
 
   it('rejects invalid professionalType', async () => {
     const u = await User.create({ email: 'ca@t.com', password: 'pass1234', role: 'victim' });
-    await expect(Appointment.create({
-      client: u._id, professional: u._id, professionalType: 'nurse',
-      startTime: new Date(), endTime: new Date(), durationMinutes: 60,
-    })).rejects.toThrow();
+    await expect(
+      Appointment.create({
+        client: u._id,
+        professional: u._id,
+        professionalType: 'nurse',
+        startTime: new Date(),
+        endTime: new Date(),
+        durationMinutes: 60,
+      }),
+    ).rejects.toThrow();
   });
 
   it('defaults reminderSent to false', async () => {
     const u = await User.create({ email: 'cb@t.com', password: 'pass1234', role: 'victim' });
     const appt = await Appointment.create({
-      client: u._id, professional: u._id, professionalType: 'lawyer',
-      startTime: new Date(), endTime: new Date(), durationMinutes: 60,
+      client: u._id,
+      professional: u._id,
+      professionalType: 'lawyer',
+      startTime: new Date(),
+      endTime: new Date(),
+      durationMinutes: 60,
     });
     expect(appt.reminderSent).toBe(false);
   });
@@ -195,18 +231,27 @@ import Subscription from '../../../src/models/Subscription.js';
 describe('Payment model', () => {
   it('creates a payment with defaults', async () => {
     const u = await User.create({ email: 'pay@t.com', password: 'pass1234', role: 'victim' });
-    const p = await Payment.create({ payer: u._id, type: 'appointment', amount: 100, currency: 'USD' });
+    const p = await Payment.create({
+      payer: u._id,
+      type: 'appointment',
+      amount: 100,
+      currency: 'USD',
+    });
     expect(p.status).toBe('pending');
   });
 
   it('rejects invalid currency', async () => {
     const u = await User.create({ email: 'pay2@t.com', password: 'pass1234', role: 'victim' });
-    await expect(Payment.create({ payer: u._id, type: 'appointment', amount: 50, currency: 'EUR' })).rejects.toThrow();
+    await expect(
+      Payment.create({ payer: u._id, type: 'appointment', amount: 50, currency: 'EUR' }),
+    ).rejects.toThrow();
   });
 
   it('rejects invalid type', async () => {
     const u = await User.create({ email: 'pay3@t.com', password: 'pass1234', role: 'victim' });
-    await expect(Payment.create({ payer: u._id, type: 'gift', amount: 50, currency: 'USD' })).rejects.toThrow();
+    await expect(
+      Payment.create({ payer: u._id, type: 'gift', amount: 50, currency: 'USD' }),
+    ).rejects.toThrow();
   });
 });
 
@@ -227,7 +272,10 @@ describe('Notification model', () => {
   it('creates a notification', async () => {
     const u = await User.create({ email: 'nf@t.com', password: 'pass1234', role: 'victim' });
     const n = await Notification.create({
-      recipient: u._id, type: 'system', title: 'Hello', body: 'World',
+      recipient: u._id,
+      type: 'system',
+      title: 'Hello',
+      body: 'World',
     });
     expect(n.isRead).toBe(false);
     expect(n.readAt).toBeUndefined();
@@ -235,9 +283,14 @@ describe('Notification model', () => {
 
   it('rejects invalid notification type', async () => {
     const u = await User.create({ email: 'nf2@t.com', password: 'pass1234', role: 'victim' });
-    await expect(Notification.create({
-      recipient: u._id, type: 'unknown_type', title: 'X', body: 'Y',
-    })).rejects.toThrow();
+    await expect(
+      Notification.create({
+        recipient: u._id,
+        type: 'unknown_type',
+        title: 'X',
+        body: 'Y',
+      }),
+    ).rejects.toThrow();
   });
 });
 
@@ -247,7 +300,10 @@ import SosEvent from '../../../src/models/SosEvent.js';
 describe('SosEvent model', () => {
   it('creates a SOS event with default status', async () => {
     const u = await User.create({ email: 'sos@t.com', password: 'pass1234', role: 'victim' });
-    const s = await SosEvent.create({ triggeredBy: u._id, location: { type: 'Point', coordinates: [0, 0] } });
+    const s = await SosEvent.create({
+      triggeredBy: u._id,
+      location: { type: 'Point', coordinates: [0, 0] },
+    });
     expect(s.status).toBe('triggered');
   });
 
@@ -279,13 +335,16 @@ describe('AwarenessArticle model', () => {
   it('enforces unique slug', async () => {
     await AwarenessArticle.create({ title: 'A', slug: 'unique-slug', content: 'c' });
     await expect(
-      AwarenessArticle.create({ title: 'B', slug: 'unique-slug', content: 'd' })
+      AwarenessArticle.create({ title: 'B', slug: 'unique-slug', content: 'd' }),
     ).rejects.toThrow();
   });
 
   it('accepts valid category enum', async () => {
     const a = await AwarenessArticle.create({
-      title: 'Legal', slug: 'legal-rights', content: 'c', category: 'legal_rights',
+      title: 'Legal',
+      slug: 'legal-rights',
+      content: 'c',
+      category: 'legal_rights',
     });
     expect(a.category).toBe('legal_rights');
   });
@@ -305,13 +364,17 @@ describe('Review model', () => {
 
   it('rejects rating out of range', async () => {
     const u = await User.create({ email: 'rv3@t.com', password: 'pass1234', role: 'victim' });
-    await expect(Review.create({ reviewer: u._id, professional: u._id, rating: 6 })).rejects.toThrow();
+    await expect(
+      Review.create({ reviewer: u._id, professional: u._id, rating: 6 }),
+    ).rejects.toThrow();
   });
 
   it('enforces unique reviewer-professional pair', async () => {
     const u1 = await User.create({ email: 'rv4@t.com', password: 'pass1234', role: 'victim' });
     const u2 = await User.create({ email: 'rv5@t.com', password: 'pass1234', role: 'lawyer' });
     await Review.create({ reviewer: u1._id, professional: u2._id, rating: 5 });
-    await expect(Review.create({ reviewer: u1._id, professional: u2._id, rating: 3 })).rejects.toThrow();
+    await expect(
+      Review.create({ reviewer: u1._id, professional: u2._id, rating: 3 }),
+    ).rejects.toThrow();
   });
 });

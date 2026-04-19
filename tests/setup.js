@@ -1,5 +1,3 @@
-import { vi } from 'vitest';
-
 // Provide env vars before any module loads
 process.env.JWT_SECRET = 'test_jwt_secret_32chars_minimum!!';
 process.env.JWT_REFRESH_SECRET = 'test_refresh_secret_32chars_min!!';

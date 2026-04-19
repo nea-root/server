@@ -4,7 +4,9 @@ import Message from '../models/Message.js';
 import User from '../models/User.js';
 import { requireAuth } from '../middleware/context.js';
 
-const forbidden = () => { throw new GraphQLError('Forbidden', { extensions: { code: 'FORBIDDEN' } }); };
+const forbidden = () => {
+  throw new GraphQLError('Forbidden', { extensions: { code: 'FORBIDDEN' } });
+};
 
 export const chatResolvers = {
   Query: {
@@ -30,11 +32,15 @@ export const chatResolvers = {
 
       await Message.updateMany(
         { chat: chatId, sender: { $ne: user._id }, isRead: false },
-        { isRead: true, readAt: new Date() }
+        { isRead: true, readAt: new Date() },
       );
-      await Chat.findByIdAndUpdate(chatId, {
-        $set: { 'unreadCounts.$[elem].count': 0 },
-      }, { arrayFilters: [{ 'elem.user': user._id }] });
+      await Chat.findByIdAndUpdate(
+        chatId,
+        {
+          $set: { 'unreadCounts.$[elem].count': 0 },
+        },
+        { arrayFilters: [{ 'elem.user': user._id }] },
+      );
 
       return messages.reverse();
     },
@@ -46,7 +52,9 @@ export const chatResolvers = {
       let chat = await Chat.findOne({
         participants: { $all: [user._id, participantId] },
         type,
-      }).populate('participants').populate('lastMessage');
+      })
+        .populate('participants')
+        .populate('lastMessage');
 
       if (!chat) {
         chat = await Chat.create({
@@ -89,10 +97,11 @@ export const chatResolvers = {
       return message.populate('sender');
     },
 
-    deleteMessage: async (_, { chatId, messageId }, { user }) => {
+    deleteMessage: async (_, { messageId }, { user }) => {
       requireAuth(user);
       const message = await Message.findById(messageId);
-      if (!message) throw new GraphQLError('Message not found', { extensions: { code: 'NOT_FOUND' } });
+      if (!message)
+        throw new GraphQLError('Message not found', { extensions: { code: 'NOT_FOUND' } });
       if (message.sender.toString() !== user._id.toString()) forbidden();
       message.isDeleted = true;
       message.deletedAt = new Date();
@@ -105,21 +114,27 @@ export const chatResolvers = {
       requireAuth(user);
       await Message.updateMany(
         { chat: chatId, sender: { $ne: user._id }, isRead: false },
-        { isRead: true, readAt: new Date() }
+        { isRead: true, readAt: new Date() },
       );
-      await Chat.findByIdAndUpdate(chatId, {
-        $set: { 'unreadCounts.$[elem].count': 0 },
-      }, { arrayFilters: [{ 'elem.user': user._id }] });
+      await Chat.findByIdAndUpdate(
+        chatId,
+        {
+          $set: { 'unreadCounts.$[elem].count': 0 },
+        },
+        { arrayFilters: [{ 'elem.user': user._id }] },
+      );
       return { success: true, message: 'Messages marked as read' };
     },
   },
 
   Chat: {
     id: (c) => c._id,
-    participants: (c) => c.participants?.length && c.participants[0]?._id
-      ? c.participants
-      : User.find({ _id: { $in: c.participants } }),
-    lastMessage: (c) => c.lastMessage?._id ? c.lastMessage : (c.lastMessage ? Message.findById(c.lastMessage) : null),
+    participants: (c) =>
+      c.participants?.length && c.participants[0]?._id
+        ? c.participants
+        : User.find({ _id: { $in: c.participants } }),
+    lastMessage: (c) =>
+      c.lastMessage?._id ? c.lastMessage : c.lastMessage ? Message.findById(c.lastMessage) : null,
     unreadCount: (c, _, { user }) => {
       const entry = c.unreadCounts?.find((u) => u.user.toString() === user?._id?.toString());
       return entry?.count || 0;
@@ -129,7 +144,7 @@ export const chatResolvers = {
 
   ChatMessage: {
     id: (m) => m._id,
-    sender: (m) => m.sender?._id ? m.sender : User.findById(m.sender),
+    sender: (m) => (m.sender?._id ? m.sender : User.findById(m.sender)),
     chat: (m) => Chat.findById(m.chat),
     attachments: (m) => m.attachments || [],
   },

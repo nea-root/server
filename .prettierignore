@@ -1,0 +1,7 @@
+node_modules
+coverage
+public
+uploads
+logs
+package-lock.json
+*.min.js

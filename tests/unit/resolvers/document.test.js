@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GraphQLError } from 'graphql';
-import { mockQuery, mockDoc } from '../../helpers/chainable.js';
+import { mockQuery } from '../../helpers/chainable.js';
 
 vi.mock('../../../src/models/Document.js', () => ({
   default: {
@@ -29,7 +29,6 @@ const victim = { _id: 'uid1', role: 'victim' };
 const admin = { _id: 'admin1', role: 'admin' };
 const ctx = (u = victim) => ({ user: u });
 
-const noteId = 'note1';
 const makeDoc = (overrides = {}) => ({
   _id: 'doc1',
   owner: { _id: 'uid1', toString: () => 'uid1' },
@@ -51,7 +50,9 @@ describe('documentResolvers.Query.myDocuments', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('throws when not authenticated', async () => {
-    await expect(documentResolvers.Query.myDocuments(null, {}, ctx(null))).rejects.toThrow(GraphQLError);
+    await expect(documentResolvers.Query.myDocuments(null, {}, ctx(null))).rejects.toThrow(
+      GraphQLError,
+    );
   });
 
   it('returns user documents', async () => {
@@ -71,18 +72,24 @@ describe('documentResolvers.Query.document', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('throws when not authenticated', async () => {
-    await expect(documentResolvers.Query.document(null, { id: 'd1' }, ctx(null))).rejects.toThrow(GraphQLError);
+    await expect(documentResolvers.Query.document(null, { id: 'd1' }, ctx(null))).rejects.toThrow(
+      GraphQLError,
+    );
   });
 
   it('throws NOT_FOUND when document missing', async () => {
     Document.findById.mockReturnValue(mockQuery(null));
-    await expect(documentResolvers.Query.document(null, { id: 'd1' }, ctx())).rejects.toThrow(GraphQLError);
+    await expect(documentResolvers.Query.document(null, { id: 'd1' }, ctx())).rejects.toThrow(
+      GraphQLError,
+    );
   });
 
   it('throws FORBIDDEN when user is not owner or shared', async () => {
     const doc = makeDoc({ owner: { _id: 'other', toString: () => 'other' }, sharedWith: [] });
     Document.findById.mockReturnValue(mockQuery(doc));
-    await expect(documentResolvers.Query.document(null, { id: 'd1' }, ctx())).rejects.toThrow(GraphQLError);
+    await expect(documentResolvers.Query.document(null, { id: 'd1' }, ctx())).rejects.toThrow(
+      GraphQLError,
+    );
   });
 
   it('returns document for owner', async () => {
@@ -109,14 +116,22 @@ describe('documentResolvers.Mutation.addDocumentNote', () => {
 
   it('throws when not authenticated', async () => {
     await expect(
-      documentResolvers.Mutation.addDocumentNote(null, { documentId: 'd1', content: 'note' }, ctx(null))
+      documentResolvers.Mutation.addDocumentNote(
+        null,
+        { documentId: 'd1', content: 'note' },
+        ctx(null),
+      ),
     ).rejects.toThrow(GraphQLError);
   });
 
   it('throws NOT_FOUND when document missing', async () => {
     Document.findById.mockResolvedValue(null);
     await expect(
-      documentResolvers.Mutation.addDocumentNote(null, { documentId: 'd1', content: 'note' }, ctx())
+      documentResolvers.Mutation.addDocumentNote(
+        null,
+        { documentId: 'd1', content: 'note' },
+        ctx(),
+      ),
     ).rejects.toThrow(GraphQLError);
   });
 
@@ -124,7 +139,11 @@ describe('documentResolvers.Mutation.addDocumentNote', () => {
     const doc = makeDoc({ notes: [] });
     doc.populate = vi.fn().mockResolvedValue(doc);
     Document.findById.mockResolvedValue(doc);
-    await documentResolvers.Mutation.addDocumentNote(null, { documentId: 'd1', content: 'My note' }, ctx());
+    await documentResolvers.Mutation.addDocumentNote(
+      null,
+      { documentId: 'd1', content: 'My note' },
+      ctx(),
+    );
     expect(doc.notes.length).toBe(1);
     expect(doc.save).toHaveBeenCalled();
   });
@@ -136,7 +155,7 @@ describe('documentResolvers.Mutation.toggleNoteStarred', () => {
   it('throws NOT_FOUND when document missing', async () => {
     Document.findById.mockResolvedValue(null);
     await expect(
-      documentResolvers.Mutation.toggleNoteStarred(null, { documentId: 'd1', noteId: 'n1' }, ctx())
+      documentResolvers.Mutation.toggleNoteStarred(null, { documentId: 'd1', noteId: 'n1' }, ctx()),
     ).rejects.toThrow(GraphQLError);
   });
 
@@ -144,7 +163,7 @@ describe('documentResolvers.Mutation.toggleNoteStarred', () => {
     const doc = makeDoc({ owner: { _id: 'other', toString: () => 'other' } });
     Document.findById.mockResolvedValue(doc);
     await expect(
-      documentResolvers.Mutation.toggleNoteStarred(null, { documentId: 'd1', noteId: 'n1' }, ctx())
+      documentResolvers.Mutation.toggleNoteStarred(null, { documentId: 'd1', noteId: 'n1' }, ctx()),
     ).rejects.toThrow(GraphQLError);
   });
 
@@ -152,7 +171,11 @@ describe('documentResolvers.Mutation.toggleNoteStarred', () => {
     const doc = makeDoc({ notes: { id: vi.fn().mockReturnValue(null) } });
     Document.findById.mockResolvedValue(doc);
     await expect(
-      documentResolvers.Mutation.toggleNoteStarred(null, { documentId: 'd1', noteId: 'bad-note' }, ctx())
+      documentResolvers.Mutation.toggleNoteStarred(
+        null,
+        { documentId: 'd1', noteId: 'bad-note' },
+        ctx(),
+      ),
     ).rejects.toThrow(GraphQLError);
   });
 
@@ -161,7 +184,11 @@ describe('documentResolvers.Mutation.toggleNoteStarred', () => {
     const doc = makeDoc({ notes: { id: vi.fn().mockReturnValue(note) } });
     doc.populate = vi.fn().mockResolvedValue(doc);
     Document.findById.mockResolvedValue(doc);
-    await documentResolvers.Mutation.toggleNoteStarred(null, { documentId: 'd1', noteId: 'n1' }, ctx());
+    await documentResolvers.Mutation.toggleNoteStarred(
+      null,
+      { documentId: 'd1', noteId: 'n1' },
+      ctx(),
+    );
     expect(note.isStarred).toBe(true);
     expect(doc.save).toHaveBeenCalled();
   });
@@ -174,7 +201,7 @@ describe('documentResolvers.Mutation.deleteDocument', () => {
     const doc = makeDoc({ owner: { _id: 'other', toString: () => 'other' } });
     Document.findById.mockResolvedValue(doc);
     await expect(
-      documentResolvers.Mutation.deleteDocument(null, { id: 'd1' }, ctx())
+      documentResolvers.Mutation.deleteDocument(null, { id: 'd1' }, ctx()),
     ).rejects.toThrow(GraphQLError);
   });
 
@@ -194,7 +221,9 @@ describe('documentResolvers.Mutation.shareDocument', () => {
     const doc = makeDoc({ sharedWith: [] });
     Document.findById.mockResolvedValue(doc);
     const result = await documentResolvers.Mutation.shareDocument(
-      null, { documentId: 'd1', professionalId: 'prof1' }, ctx()
+      null,
+      { documentId: 'd1', professionalId: 'prof1' },
+      ctx(),
     );
     expect(result.success).toBe(true);
     expect(doc.isSharedWithProfessional).toBe(true);
@@ -205,7 +234,9 @@ describe('documentResolvers.Mutation.shareDocument', () => {
     doc.sharedWith.map = vi.fn().mockReturnValue(['prof1']);
     Document.findById.mockResolvedValue(doc);
     await documentResolvers.Mutation.shareDocument(
-      null, { documentId: 'd1', professionalId: 'prof1' }, ctx()
+      null,
+      { documentId: 'd1', professionalId: 'prof1' },
+      ctx(),
     );
     expect(doc.save).not.toHaveBeenCalled();
   });
@@ -217,8 +248,10 @@ describe('documentResolvers.Mutation.verifyDocument', () => {
   it('throws FORBIDDEN for non-admin', async () => {
     await expect(
       documentResolvers.Mutation.verifyDocument(
-        null, { documentId: 'd1', status: 'verified' }, ctx()
-      )
+        null,
+        { documentId: 'd1', status: 'verified' },
+        ctx(),
+      ),
     ).rejects.toThrow(GraphQLError);
   });
 
@@ -230,8 +263,10 @@ describe('documentResolvers.Mutation.verifyDocument', () => {
     User.findByIdAndUpdate.mockResolvedValue({});
     Notification.create.mockResolvedValue({});
 
-    const result = await documentResolvers.Mutation.verifyDocument(
-      null, { documentId: 'd1', status: 'verified' }, ctx(admin)
+    await documentResolvers.Mutation.verifyDocument(
+      null,
+      { documentId: 'd1', status: 'verified' },
+      ctx(admin),
     );
     expect(doc.verificationStatus).toBe('verified');
     expect(User.findByIdAndUpdate).toHaveBeenCalled();
@@ -244,7 +279,9 @@ describe('documentResolvers.Mutation.verifyDocument', () => {
     Notification.create.mockResolvedValue({});
 
     await documentResolvers.Mutation.verifyDocument(
-      null, { documentId: 'd1', status: 'rejected', rejectionReason: 'Bad scan' }, ctx(admin)
+      null,
+      { documentId: 'd1', status: 'rejected', rejectionReason: 'Bad scan' },
+      ctx(admin),
     );
     expect(doc.verificationStatus).toBe('rejected');
     expect(doc.rejectionReason).toBe('Bad scan');

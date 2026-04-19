@@ -47,16 +47,14 @@ describe('awarenessResolvers.Query.articles', () => {
     AwarenessArticle.find.mockReturnValue(mockQuery([]));
     await awarenessResolvers.Query.articles(null, { category: 'legal_rights' });
     expect(AwarenessArticle.find).toHaveBeenCalledWith(
-      expect.objectContaining({ category: 'legal_rights' })
+      expect.objectContaining({ category: 'legal_rights' }),
     );
   });
 
   it('filters by tag', async () => {
     AwarenessArticle.find.mockReturnValue(mockQuery([]));
     await awarenessResolvers.Query.articles(null, { tag: 'safety' });
-    expect(AwarenessArticle.find).toHaveBeenCalledWith(
-      expect.objectContaining({ tags: 'safety' })
-    );
+    expect(AwarenessArticle.find).toHaveBeenCalledWith(expect.objectContaining({ tags: 'safety' }));
   });
 });
 
@@ -65,7 +63,9 @@ describe('awarenessResolvers.Query.article', () => {
 
   it('throws NOT_FOUND for unknown slug', async () => {
     AwarenessArticle.findOne.mockReturnValue(mockQuery(null));
-    await expect(awarenessResolvers.Query.article(null, { slug: 'not-found' })).rejects.toThrow(GraphQLError);
+    await expect(awarenessResolvers.Query.article(null, { slug: 'not-found' })).rejects.toThrow(
+      GraphQLError,
+    );
   });
 
   it('returns article and increments viewCount', async () => {
@@ -83,18 +83,22 @@ describe('awarenessResolvers.Mutation.createArticle', () => {
   it('throws FORBIDDEN for non-admin', async () => {
     await expect(
       awarenessResolvers.Mutation.createArticle(
-        null, { title: 'T', slug: 's', content: 'c' }, ctx(victim)
-      )
+        null,
+        { title: 'T', slug: 's', content: 'c' },
+        ctx(victim),
+      ),
     ).rejects.toThrow(GraphQLError);
   });
 
   it('creates article as unpublished', async () => {
     AwarenessArticle.create.mockResolvedValue(makeArticle({ isPublished: false }));
-    const result = await awarenessResolvers.Mutation.createArticle(
-      null, { title: 'Safety Tips', slug: 'safety-tips', content: 'Content' }, ctx()
+    await awarenessResolvers.Mutation.createArticle(
+      null,
+      { title: 'Safety Tips', slug: 'safety-tips', content: 'Content' },
+      ctx(),
     );
     expect(AwarenessArticle.create).toHaveBeenCalledWith(
-      expect.objectContaining({ isPublished: false, author: admin._id })
+      expect.objectContaining({ isPublished: false, author: admin._id }),
     );
   });
 });
@@ -104,19 +108,21 @@ describe('awarenessResolvers.Mutation.publishArticle', () => {
 
   it('throws FORBIDDEN for non-admin', async () => {
     await expect(
-      awarenessResolvers.Mutation.publishArticle(null, { id: 'a1' }, ctx(victim))
+      awarenessResolvers.Mutation.publishArticle(null, { id: 'a1' }, ctx(victim)),
     ).rejects.toThrow(GraphQLError);
   });
 
   it('throws NOT_FOUND when article missing', async () => {
     AwarenessArticle.findByIdAndUpdate.mockReturnValue(mockQuery(null));
     await expect(
-      awarenessResolvers.Mutation.publishArticle(null, { id: 'a1' }, ctx())
+      awarenessResolvers.Mutation.publishArticle(null, { id: 'a1' }, ctx()),
     ).rejects.toThrow(GraphQLError);
   });
 
   it('publishes the article', async () => {
-    AwarenessArticle.findByIdAndUpdate.mockReturnValue(mockQuery(makeArticle({ isPublished: true })));
+    AwarenessArticle.findByIdAndUpdate.mockReturnValue(
+      mockQuery(makeArticle({ isPublished: true })),
+    );
     const result = await awarenessResolvers.Mutation.publishArticle(null, { id: 'art1' }, ctx());
     expect(result.isPublished).toBe(true);
   });
@@ -125,7 +131,7 @@ describe('awarenessResolvers.Mutation.publishArticle', () => {
 describe('awarenessResolvers.Mutation.deleteArticle', () => {
   it('throws FORBIDDEN for non-admin', async () => {
     await expect(
-      awarenessResolvers.Mutation.deleteArticle(null, { id: 'a1' }, ctx(victim))
+      awarenessResolvers.Mutation.deleteArticle(null, { id: 'a1' }, ctx(victim)),
     ).rejects.toThrow(GraphQLError);
   });
 

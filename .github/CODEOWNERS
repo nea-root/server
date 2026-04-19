@@ -1,0 +1,15 @@
+# Global owner — required reviewer for every PR
+* @nea-root
+
+# Core infrastructure
+app.js @nea-root
+resolvers.js @nea-root
+schema.graphql @nea-root
+
+# Auth and security — require explicit sign-off
+src/resolvers/auth.resolver.js @nea-root
+src/middleware/context.js @nea-root
+src/utils/jwt.js @nea-root
+
+# CI / tooling changes
+.github/ @nea-root
