@@ -15,11 +15,13 @@ import multer from 'multer';
 import { readFile } from 'node:fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';
+import swaggerUi from 'swagger-ui-express';
 
 import { resolvers } from './resolvers.js';
 import { connectDB } from './src/config/database.js';
 import { buildContext } from './src/middleware/context.js';
 import { initChatSocket } from './src/sockets/chat.socket.js';
+import swaggerDefinition from './src/docs/swagger.js';
 import indexRouter from './routes/index.js';
 import usersRouter from './routes/users.js';
 
@@ -133,6 +135,22 @@ app.use('/graphql', apolloMiddleware(apolloServer, { context: buildContext }));
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (_, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
+// ─── Swagger UI (disabled in production) ──────────────────────────────────────
+if (process.env.NODE_ENV !== 'production') {
+  const swaggerUiOptions = {
+    customSiteTitle: 'Nevereveralone API Docs',
+    customCss: '.swagger-ui .topbar { background-color: #1a1a2e; }',
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      filter: true,
+      tryItOutEnabled: true,
+    },
+  };
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDefinition, swaggerUiOptions));
+  app.get('/api-docs.json', (_, res) => res.json(swaggerDefinition));
+}
 
 // ─── Legacy routes ────────────────────────────────────────────────────────────
 app.use('/', indexRouter);
